@@ -13,6 +13,7 @@ impl GitContext {
     /// Create a empty (no git repository specified) [GitContext].
     ///
     /// This can be used as `Default::default()` for [GitContext].
+    #[allow(unused)]
     pub fn empty() -> Self {
         Self { repo: None }
     }
@@ -49,15 +50,20 @@ impl GitContext {
     /// # Panic
     /// - If `path` is not a file.
     /// - If the line number exceeding the real number.
-    pub fn get_line_oid(&self, path: &Path, line_number: usize) -> Option<Oid> {
+    pub fn get_line_history(&self, path: &Path, line_number: usize) -> Option<(Oid, Oid)> {
         if let Some(repo) = &self.repo {
             let path = self.convert_path(path);
 
-            if let Ok(blame) = repo.blame_file(path, None) {
-                Some(blame.get_line(line_number).unwrap().orig_commit_id())
-            } else {
-                Some(Oid::zero())
-            }
+            // if let Ok(blame) = repo.blame_file(path, None) {
+            //     Some(blame.get_line(line_number).unwrap().orig_commit_id())
+            // } else {
+            //     Some(Oid::zero())
+            // }
+
+            repo.blame_file(path, None).ok().map(|blame| {
+                let hunk = blame.get_line(line_number).unwrap();
+                (hunk.orig_commit_id(), hunk.final_commit_id())
+            })
         } else {
             None
         }
@@ -102,6 +108,6 @@ mod test {
         let ctx = GitContext::with_dir("/home/wayne/repo/lstodo");
         let path = Path::new("/home/wayne/repo/lstodo/src/regex.rs");
 
-        println!("oid: {:?}", ctx.get_line_oid(path, 1));
+        println!("oid: {:?}", ctx.get_line_history(path, 1));
     }
 }

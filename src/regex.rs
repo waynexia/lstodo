@@ -1,26 +1,29 @@
 use regex::RegexSet;
-use std::{borrow::Borrow, convert::TryInto, io::BufReader};
-use std::{fs::File, io::BufRead};
+use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::entry::Entry;
 use crate::error::Result;
 use crate::git::GitContext;
+use crate::options::Options;
 
 pub const DEFAULT_REGEXS: &[&str] = &["(?i)//\\s*todo"];
 
 pub struct RegexSearcherBuilder {
     root: String,
     rules: Vec<String>,
-    git_ctx: Option<GitContext>,
+    git_ctx: GitContext,
 }
 
 impl RegexSearcherBuilder {
-    pub fn new(root: String) -> Self {
+    pub fn with_options(options: &Options) -> Self {
+        let git_ctx = GitContext::with_dir(options.root_dir.clone());
         Self {
-            root,
+            root: options.root_dir.clone(),
             rules: vec![],
-            git_ctx: None,
+            git_ctx,
         }
     }
 
@@ -28,11 +31,6 @@ impl RegexSearcherBuilder {
         for rule in rules {
             self.rules.push(rule.to_string());
         }
-        self
-    }
-
-    pub fn git_ctx(mut self, git_ctx: GitContext) -> Self {
-        self.git_ctx = Some(git_ctx);
         self
     }
 
@@ -51,11 +49,11 @@ impl RegexSearcherBuilder {
 pub struct RegexSearcher {
     regex: RegexSet,
     root: WalkDir,
-    git_ctx: Option<GitContext>,
+    git_ctx: GitContext,
 }
 
 impl RegexSearcher {
-    pub fn search(self) -> Result<()> {
+    pub fn search(self) -> Result<Vec<Entry>> {
         let mut results = vec![];
 
         let RegexSearcher {
@@ -83,11 +81,8 @@ impl RegexSearcher {
                             entry.path().to_string_lossy().into(),
                             line_number,
                             line,
-                            git_ctx
-                                .borrow()
-                                .as_ref()
-                                .map(|ctx| ctx.get_line_oid(entry.path(), line_number as usize))
-                                .flatten(),
+                            git_ctx.get_line_history(entry.path(), line_number as usize),
+                            entry.metadata()?,
                         ));
                     }
                 } else {
@@ -97,12 +92,10 @@ impl RegexSearcher {
             }
         }
 
-        println!("results:\n{:?}", results);
-
-        Ok(())
+        Ok(results)
     }
 
-    fn file_filter(entry: &DirEntry, git_ctx: &Option<GitContext>) -> Result<bool> {
+    fn file_filter(entry: &DirEntry, git_ctx: &GitContext) -> Result<bool> {
         // ignore hidden file
         if entry
             .file_name()
@@ -114,10 +107,8 @@ impl RegexSearcher {
         }
 
         // ignore files covered in .gitignore
-        if let Some(git_ctx) = git_ctx {
-            if !entry.metadata()?.is_dir() && git_ctx.is_ignored(entry.path())? {
-                return Ok(false);
-            }
+        if !entry.metadata()?.is_dir() && git_ctx.is_ignored(entry.path())? {
+            return Ok(false);
         }
 
         Ok(true)
@@ -143,15 +134,5 @@ mod test {
         for (input, expected) in cases {
             assert_eq!(regex.matches(input).matched_any(), expected)
         }
-    }
-
-    #[test]
-    fn temp_main() {
-        let searcher = RegexSearcherBuilder::new("/home/wayne/repo/lstodo".to_owned())
-            .add_rules(DEFAULT_REGEXS)
-            .git_ctx(GitContext::with_dir("/home/wayne/repo/lstodo/src"))
-            .build();
-
-        searcher.search().unwrap();
     }
 }
