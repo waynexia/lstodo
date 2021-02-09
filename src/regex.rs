@@ -73,8 +73,6 @@ impl RegexSearcher {
                 continue;
             }
 
-            println!("curr path: {:?}", entry.path());
-
             let file = File::open(entry.path()).unwrap();
             let reader = BufReader::new(file);
             let mut line_number = 1;
@@ -88,7 +86,8 @@ impl RegexSearcher {
                             git_ctx
                                 .borrow()
                                 .as_ref()
-                                .map(|ctx| ctx.get_line_oid(entry.path(), line_number as usize)),
+                                .map(|ctx| ctx.get_line_oid(entry.path(), line_number as usize))
+                                .flatten(),
                         ));
                     }
                 } else {
@@ -116,17 +115,8 @@ impl RegexSearcher {
 
         // ignore files covered in .gitignore
         if let Some(git_ctx) = git_ctx {
-            if !entry.metadata()?.is_dir() {
-                let relative_path = entry.path().strip_prefix(git_ctx.work_dir()).unwrap();
-
-                // ignore root
-                if relative_path.as_os_str().is_empty() {
-                    return Ok(true);
-                }
-
-                if git_ctx.is_ignored(relative_path)? {
-                    return Ok(false);
-                }
+            if !entry.metadata()?.is_dir() && git_ctx.is_ignored(entry.path())? {
+                return Ok(false);
             }
         }
 
@@ -143,7 +133,7 @@ mod test {
         let cases = vec![
             ("//todo", true),
             ("// todo", true),
-            ("// TODOabdsf", true),
+            ("// TODO-123", true),
             ("//   TodO", true),
             ("not_a_todo", false),
         ];
@@ -159,7 +149,7 @@ mod test {
     fn temp_main() {
         let searcher = RegexSearcherBuilder::new("/home/wayne/repo/lstodo".to_owned())
             .add_rules(DEFAULT_REGEXS)
-            .git_ctx(GitContext::try_new("/home/wayne/repo/lstodo/src").unwrap())
+            .git_ctx(GitContext::with_dir("/home/wayne/repo/lstodo/src"))
             .build();
 
         searcher.search().unwrap();
