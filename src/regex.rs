@@ -11,15 +11,15 @@ use crate::options::Options;
 
 pub const DEFAULT_REGEXS: &[&str] = &["(?i)//\\s*todo"];
 
-pub struct RegexSearcherBuilder {
+pub struct RegexSearcherBuilder<'a> {
     root: String,
     rules: Vec<String>,
-    git_ctx: GitContext,
+    git_ctx: &'a GitContext<'a>,
 }
 
-impl RegexSearcherBuilder {
-    pub fn with_options(options: &Options) -> Self {
-        let git_ctx = GitContext::with_dir(options.root_dir.clone());
+impl<'a> RegexSearcherBuilder<'a> {
+    pub fn new(git_ctx: &'a mut GitContext, options: &Options) -> Self {
+        git_ctx.with_dir(options.root_dir.clone());
         Self {
             root: options.root_dir.clone(),
             rules: vec![],
@@ -34,7 +34,7 @@ impl RegexSearcherBuilder {
         self
     }
 
-    pub fn build(self) -> RegexSearcher {
+    pub fn build(self) -> RegexSearcher<'a> {
         let root = WalkDir::new(self.root);
         let regex = RegexSet::new(self.rules).unwrap();
 
@@ -46,13 +46,13 @@ impl RegexSearcherBuilder {
     }
 }
 
-pub struct RegexSearcher {
+pub struct RegexSearcher<'a> {
     regex: RegexSet,
     root: WalkDir,
-    git_ctx: GitContext,
+    git_ctx: &'a GitContext<'a>,
 }
 
-impl RegexSearcher {
+impl<'a> RegexSearcher<'a> {
     pub fn search(self) -> Result<Vec<Entry>> {
         let mut results = vec![];
 

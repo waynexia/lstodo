@@ -7,6 +7,7 @@ mod options;
 mod printer;
 mod regex;
 
+use crate::git::GitContext;
 use crate::options::Options;
 use crate::printer::Printer;
 use crate::regex::{RegexSearcherBuilder, DEFAULT_REGEXS};
@@ -70,15 +71,12 @@ fn main() {
         .get_matches();
 
     let options = Options::from_args(matches);
-    let results = RegexSearcherBuilder::with_options(&options)
+    let mut git_ctx = GitContext::new();
+    let results = RegexSearcherBuilder::new(&mut git_ctx, &options)
         .add_rules(DEFAULT_REGEXS)
         .build()
         .search()
         .unwrap();
 
-    Printer::new()
-        .entries(results)
-        .prepare(&options)
-        .print(&options);
-    // println!("results: {:#?}", results);
+    Printer::new(results, &git_ctx, options).prepare().print();
 }
