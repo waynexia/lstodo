@@ -1,3 +1,4 @@
+use anyhow::Result;
 use regex::RegexSet;
 use std::fs::File;
 use std::io::BufRead;
@@ -5,7 +6,6 @@ use std::io::BufReader;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::entry::Entry;
-use crate::error::Result;
 use crate::git::GitContext;
 use crate::options::Options;
 

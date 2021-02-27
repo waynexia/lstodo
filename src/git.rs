@@ -1,9 +1,8 @@
+use anyhow::Result;
 use git2::{Commit, Oid, Repository};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::path::Path;
-
-use crate::error::Result;
 
 pub struct GitContext<'commit> {
     /// Option for no git repository.

@@ -1,7 +1,6 @@
 use clap::{App, Arg};
 
 mod entry;
-mod error;
 mod git;
 mod options;
 mod printer;
