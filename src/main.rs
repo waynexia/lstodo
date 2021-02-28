@@ -39,6 +39,12 @@ fn main() {
         )
         .arg(
             // unimplemented
+            Arg::with_name("ignore untracked files")
+                .long("no-untracked")
+                .help("ignore new added files that have not been tracked by git."),
+        )
+        .arg(
+            // unimplemented
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
