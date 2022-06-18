@@ -64,7 +64,7 @@ impl<'a> RegexSearcher<'a> {
 
         for entry in root
             .into_iter()
-            .filter_entry(|e| Self::file_filter(e, git_ctx).unwrap())
+            .filter_entry(|e| Self::file_filter(e, git_ctx).unwrap_or(false))
         {
             let entry = entry?;
             if entry.metadata()?.is_dir() {
@@ -95,6 +95,10 @@ impl<'a> RegexSearcher<'a> {
         Ok(results)
     }
 
+    /// Filter file using git infos. Return `false` or `Err` if this file:
+    /// - is git ignored
+    /// - is hidden file
+    /// - doesn't tracked by git (like submodule)
     fn file_filter(entry: &DirEntry, git_ctx: &GitContext) -> Result<bool> {
         // ignore hidden file
         if entry
