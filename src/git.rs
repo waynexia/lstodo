@@ -161,7 +161,7 @@ mod test {
         ctx.with_dir("/home/wayne/repo/lstodo/src");
         let path = Path::new(".git");
 
-        assert_eq!(true, ctx.is_ignored(path).unwrap());
+        assert!(ctx.is_ignored(path).unwrap());
     }
 
     #[test]

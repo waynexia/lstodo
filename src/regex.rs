@@ -64,7 +64,7 @@ impl<'a> RegexSearcher<'a> {
 
         for entry in root
             .into_iter()
-            .filter_entry(|e| Self::file_filter(e, &git_ctx).unwrap())
+            .filter_entry(|e| Self::file_filter(e, git_ctx).unwrap())
         {
             let entry = entry?;
             if entry.metadata()?.is_dir() {

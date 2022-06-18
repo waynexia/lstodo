@@ -16,13 +16,13 @@ fn main() {
         .arg(
             // unimplemented
             Arg::with_name("output")
-                .short("c")
+                .short('c')
                 .long("output")
                 .help("set output file"),
         )
         .arg(
             Arg::with_name("sort")
-                .short("s")
+                .short('s')
                 .long("sort")
                 .takes_value(true)
                 .possible_values(&["fc", "lc", "lm"])
@@ -46,7 +46,7 @@ fn main() {
         .arg(
             // unimplemented
             Arg::with_name("verbose")
-                .short("v")
+                .short('v')
                 .long("verbose")
                 .help("display verbose message"),
         )

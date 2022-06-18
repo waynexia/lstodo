@@ -2,14 +2,14 @@
 name = "lstodo"
 version = "0.1.0"
 authors = ["Ruihang Xia <waynestxia@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT License"
 description = "A CLI to list TODOs in your project."
 
 [dependencies]
-clap = "2.33"
-regex = "1.4"
+clap = "3.1"
+regex = "1.5"
 walkdir = "2.3"
-git2 = "0.13"
+git2 = "0.14"
 termion = "1.5"
 anyhow = "1.0"
